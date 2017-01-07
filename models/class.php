@@ -31,6 +31,7 @@ class DB_connect
             }
     }
     
+    
     public function findId($table, $name, $surname, $dateOfBirth)
     {
         $query = "SELECT `id` FROM `$table` WHERE name = '$name' AND           surname = '$surname'";
