@@ -26,7 +26,7 @@ class DB_connect
         
         else
             {
-                printf("Ошибка при загрузке набора символов utf8:            %s\n", mysqli_error($this->link));             
+                printf("Ошибка при загрузке набора символов utf8: %s\n",                    mysqli_error($this->link));             
                 exit();
             }
     }
@@ -34,78 +34,148 @@ class DB_connect
     
     public function findId($table, $name, $surname, $dateOfBirth)
     {
-        $query = "SELECT `id` FROM `$table` WHERE name = '$name' AND           surname = '$surname'";
+        $sql = "SELECT id FROM `%s` WHERE name = '%s' AND surname = '%s'";
         
-        return mysqli_query($this->link, $query);
+        $query = sprintf($sql, 
+                         mysqli_real_escape_string($this->link, trim($table)),
+                         mysqli_real_escape_string($this->link, trim($name)),
+                         mysqli_real_escape_string($this->link, trim($surname)));
+        
+        $res = mysqli_query($this->link, $query);
+        
+        if(mysqli_num_rows($res) == 0)
+            {
+                return 0;
+            }
+        
+        else
+        {
+            $temp = mysqli_fetch_assoc($res);
+            return (int)reset($temp);
+        }
     }
     
     public function createId($table, $name, $surname, $dateOfBirth)
     {
-        $query = "INSERT INTO `$table` (`name`, `surname`,                     `date_of_birth`) VALUES ('$name', '$surname',                 '2017-01-04')";
+        $sql = "INSERT INTO `%s` (`name`, `surname`, `date_of_birth`) 
+                VALUES ('%s', '%s', '2017-01-04')";
         
-        return mysqli_query($this->link, $query);    
+        $query = sprintf($sql, mysqli_real_escape_string($this->link, trim($table)),                        mysqli_real_escape_string($this->link, trim($name)),
+                               mysqli_real_escape_string($this->link, trim($surname)));
+        
+        $temp = mysqli_query($this->link, $query);
+        return $temp;    
     }
     
     public function getId($table, $name, $surname, $dateOfBirth)
     {
         $res = $this->findId($table, $name, $surname, $dateOfBirth);
         
-        if(mysqli_num_rows($res) != 0)
-        {
-            $temp = mysqli_fetch_assoc($res);
-            
-            return reset($temp);
+        if($res != 0)
+        {            
+            return $res;
         }
         
         else
         {
-            if($this->createId($table, $name, $surname,                                  $dateOfBirth))
-            {
-                $res = $this->findId($table, $name, $surname,                              $dateOfBirth);
-                
-                $temp = mysqli_fetch_assoc($res);
-                
-                return reset($temp);
-            }
+            if($this->createId($table, $name, $surname, $dateOfBirth))
+                {
+                    $res = $this->findId($table, $name, $surname,                              $dateOfBirth);
+
+                    return $res;
+                }
             
             else
-                echo "can't create row";
+                {
+                    echo "can't create row";
+                }
         }
 
     }
     
-    public function add($price, $owner_id, $realtor_id)
+    private function find_main($price, $owner_id, $realtor_id)
     {
-        $query = "SELECT `id` FROM `main` WHERE owner_id =                     '$owner_id' AND realtor_id = '$realtor_id' AND               price = '$price'";
+        $sql = "SELECT id FROM `main` WHERE price = '%d'AND owner_id = '%d' AND               realtor_id = '%d'";
+        
+        $query = sprintf($sql, mysqli_real_escape_string($this->link, $price),                              mysqli_real_escape_string($this->link, $owner_id),
+                               mysqli_real_escape_string($this->link, $realtor_id));
         
         $res = mysqli_query($this->link, $query);
         
-        if(mysqli_num_rows($res) != 0)
+        if(mysqli_num_rows($res) == 0)
+            {
+                return 0;
+            }
+        
+        else
         {
             $temp = mysqli_fetch_assoc($res);
-            
-            echo " В таблице уже есть данная запись, id: " .                reset($temp) . "<br>";
+            return (int)reset($temp);
+        }
+    }
+    
+    private function create_main($price, $owner_id, $realtor_id)
+    {
+        $sql = "INSERT INTO `main` (`price`, `owner_id`, `realtor_id`) 
+                VALUES ('%d', '%d', '%d')";
+        
+        $query = sprintf($sql, mysqli_real_escape_string($this->link, $price),                              mysqli_real_escape_string($this->link, $owner_id),
+                               mysqli_real_escape_string($this->link, $realtor_id));
+
+        $temp = mysqli_query($this->link, $query);
+        
+        return $temp;
+    }
+    
+    public function add($price, $owner_id, $realtor_id)
+    {        
+        $res = $this->find_main($price, $owner_id, $realtor_id);
+        
+        if($res != 0)
+        {            
+            echo " В таблице уже есть данная запись, id: " . $res . "<br>";
         }
         
         else
         {
-            $query = "INSERT INTO `main` (`price`, `owner_id`,                 `realtor_id`) VALUES ('$price', '$owner_id',             '$realtor_id')";
+            $isCreated = $this->create_main($price, $owner_id, $realtor_id);
             
-            echo $query;
-            
-            $res = mysqli_query($this->link, $query);
+            if($isCreated)                
+            {
+                echo "Запись успешно добалена. Ее id = " . $this->find_main($price,         $owner_id, $realtor_id) . "<br>";
+            }
+            else
+            {
+                echo "Ошибка при добавлении записи.";
+            }
+           
         }
+    }
+    
+    private function edit_main($id, $price, $owner_id, $realtor_id)
+    {
+        $sql = "UPDATE main SET price = '%d', owner_id = '%d', realtor_id = '%d'             WHERE id = '%d'";
+        
+        $query = sprintf($sql, mysqli_real_escape_string($this->link, $price),
+                               mysqli_real_escape_string($this->link, $owner_id),
+                               mysqli_real_escape_string($this->link, $realtor_id),
+                               mysqli_real_escape_string($this->link, $id));
+        $temp = mysqli_query($this->link, $query);
+        
+        return $temp;
     }
     
     public function edit($id, $price, $owner_id, $realtor_id)
     {
-        $query = "UPDATE main SET price = '$price', owner_id =                 '$owner_id', realtor_id = '$realtor_id' WHERE id =           '$id'";
-        
-        $res = mysqli_query($this->link, $query);
+        $res = $this->edit_main($id, $price, $owner_id, $realtor_id);
         
         if($res)
         {
             echo "Строка № " . $id . "успешно отредактирована <br>";
+        }
+        else
+        {
+            echo "Ошибка при редактровании строки.";
         }
         
     }
