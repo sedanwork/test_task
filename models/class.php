@@ -34,7 +34,7 @@ class DB_connect
     
     public function findId($table, $name, $surname, $dateOfBirth)
     {
-        $sql = "SELECT id FROM `%s` WHERE name = '%s' AND surname = '%s'";
+        $sql = "SELECT id FROM %s WHERE name = '%s' AND surname = '%s'";
         
         $query = sprintf($sql, 
                          mysqli_real_escape_string($this->link, trim($table)),
@@ -57,7 +57,7 @@ class DB_connect
     
     public function createId($table, $name, $surname, $dateOfBirth)
     {
-        $sql = "INSERT INTO `%s` (`name`, `surname`, `date_of_birth`) 
+        $sql = "INSERT INTO %s (`name`, `surname`, `date_of_birth`) 
                 VALUES ('%s', '%s', '2017-01-04')";
         
         $query = sprintf($sql, mysqli_real_escape_string($this->link, trim($table)),                        mysqli_real_escape_string($this->link, trim($name)),
@@ -95,7 +95,7 @@ class DB_connect
     
     private function find_main($price, $owner_id, $realtor_id)
     {
-        $sql = "SELECT id FROM `main` WHERE price = '%d'AND owner_id = '%d' AND               realtor_id = '%d'";
+        $sql = "SELECT id FROM main WHERE price = '%d'AND owner_id = '%d' AND               realtor_id = '%d'";
         
         $query = sprintf($sql, mysqli_real_escape_string($this->link, $price),                              mysqli_real_escape_string($this->link, $owner_id),
                                mysqli_real_escape_string($this->link, $realtor_id));
@@ -116,7 +116,7 @@ class DB_connect
     
     private function create_main($price, $owner_id, $realtor_id)
     {
-        $sql = "INSERT INTO `main` (`price`, `owner_id`, `realtor_id`) 
+        $sql = "INSERT INTO main (`price`, `owner_id`, `realtor_id`) 
                 VALUES ('%d', '%d', '%d')";
         
         $query = sprintf($sql, mysqli_real_escape_string($this->link, $price),                              mysqli_real_escape_string($this->link, $owner_id),
@@ -165,19 +165,82 @@ class DB_connect
         return $temp;
     }
     
+    private function edit_man($table, $id, $name, $surname)
+    {
+        $sql = "UPDATE %s SET name = '%s', surname = '%s' WHERE id = '%d'";
+        
+        $query = sprintf($sql, mysqli_real_escape_string($this->link, trim($table)),
+                               mysqli_real_escape_string($this->link, trim($name)),
+                               mysqli_real_escape_string($this->link,                                           trim($surname)),
+                               mysqli_real_escape_string($this->link, $id));
+        
+        $temp = mysqli_query($this->link, $query);
+        
+        return $temp; 
+    }
+    
+    private function isExist($table, $id)
+    {
+        $sql = "SELECT * FROM %s WHERE id = '%d'";
+        
+        $query  = sprintf($sql, mysqli_real_escape_string($this->link, trim($table)),
+                                mysqli_real_escape_string($this->link, $id));
+        
+        $temp = mysqli_query($this->link, $query);
+        
+        if(mysqli_num_rows($temp) == 0)
+            {
+                return false;
+            }
+        
+        else
+            {
+                return true;
+            }
+    }
+    
     public function edit($id, $price, $owner_id, $realtor_id)
     {
-        $res = $this->edit_main($id, $price, $owner_id, $realtor_id);
-        
-        if($res)
+        if($this->isExist("main", $id))
         {
-            echo "Строка № " . $id . "успешно отредактирована <br>";
+            $res = $this->edit_main($id, $price, $owner_id, $realtor_id);
+        
+            if($res)
+            {
+                echo "Строка № " . $id . "успешно отредактирована. <br>";
+            }
+            else
+            {
+                echo "Ошибка при редактровании строки.";
+            }
         }
         else
         {
-            echo "Ошибка при редактровании строки.";
+            echo "Строки с номером: " . $id . " не существует.";
         }
         
+    }
+    
+    public function edit_owner($table, $id, $name, $surname)
+    {
+        if($this->isExist($table, $id))
+        {
+            if($this->edit_man($table, $id, $name, $surname))
+                echo "Строка с номером: " . $id . " успешно отредактирована. <br>";
+            else
+                echo "Ошибка при редактровании строки.";
+            
+        }
+        
+        else
+        {
+            echo "Строки с номером: " . $id . " не существует.";
+        }
+    }
+    
+    private function show_main()
+    {
+        $sql = "SELECT * FROM main ORDER BY id DESC";
     }
     
     public function show()
@@ -188,13 +251,13 @@ class DB_connect
             
             $result = mysqli_query($this->link, $query);
             
-            if(!$result)
-                {
-                    die("Error: ".mysqli_error($this->link));
-                }
-            
             $n = mysqli_num_rows($result);
             
+            if($n == 0)
+                {
+                    echo "Таблица пуста";
+                }  
+
             $test = array();
             
             for($i=0; $i < $n; $i++)
@@ -204,8 +267,7 @@ class DB_connect
                 $test[] = $temp;
             }
             
-            return $test;
-            
+            return $test;            
         }
     }
     
