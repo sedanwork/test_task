@@ -240,16 +240,26 @@ class DB_connect
     
     private function show_main()
     {
-        $sql = "SELECT * FROM main ORDER BY id DESC";
+        $query = "SELECT DISTINCT m.price, o.name, o.surname, r.name, r.surname, a.town,                        a.district, a.street, a.number, obj.num_kvart, obj.squere, 
+                    case obj.ttype 
+                    when 1 then obj.jil_plosh 
+                    end
+                FROM main m 
+                JOIN owner o ON m.owner_id = o.id 
+                JOIN realtor r ON m.realtor_id = r.id 
+                JOIN object obj ON m.obj_id = obj.id 
+                JOIN adress a ON m.adress_id = a.id;";
+        
+        $temp = mysqli_query($this->link, $query);
+        
+        return $temp;
     }
     
     public function show()
     {
         if($this->link)
         {
-            $query = "SELECT * FROM main ORDER BY id DESC";
-            
-            $result = mysqli_query($this->link, $query);
+            $result = $this->show_main();
             
             $n = mysqli_num_rows($result);
             
@@ -263,7 +273,15 @@ class DB_connect
             for($i=0; $i < $n; $i++)
             {
                 $temp = mysqli_fetch_assoc($result);
-                
+                foreach($temp as $t1 => $value)
+                {
+                    if(!$temp[$t1])
+                    {
+                        unset($temp[$t1]);
+                    }
+                    echo $t1 . " hello <br>";
+                }
+                var_dump($temp);
                 $test[] = $temp;
             }
             
