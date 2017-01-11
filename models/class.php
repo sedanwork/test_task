@@ -19,12 +19,8 @@ class DB_connect
             exit();
         }
         
-        if(mysqli_set_charset($this->link, "utf8"))
-            {
-                echo "connection created <br>";
-            }
-        
-        else
+        if(!mysqli_set_charset($this->link, "utf8"))
+            
             {
                 printf("Ошибка при загрузке набора символов utf8: %s\n",                    mysqli_error($this->link));             
                 exit();
@@ -240,7 +236,7 @@ class DB_connect
     
     private function show_main()
     {
-        $query = "SELECT DISTINCT m.price, o.name, o.surname, r.name, r.surname, a.town,                        a.district, a.street, a.number, obj.num_kvart, obj.squere, 
+        $query = "SELECT DISTINCT m.id, m.price, o.o_name, o.o_surname, r.r_name, r.r_surname, obj.class, obj.ttype, a.town, a.district, a.street, a.number, obj.num_kvart, obj.squere, 
                     case obj.ttype 
                     when 1 then obj.jil_plosh 
                     end
@@ -273,15 +269,15 @@ class DB_connect
             for($i=0; $i < $n; $i++)
             {
                 $temp = mysqli_fetch_assoc($result);
+                
                 foreach($temp as $t1 => $value)
                 {
                     if(!$temp[$t1])
                     {
                         unset($temp[$t1]);
                     }
-                    echo $t1 . " hello <br>";
                 }
-                var_dump($temp);
+                
                 $test[] = $temp;
             }
             
@@ -291,9 +287,6 @@ class DB_connect
     
     function __destruct()
     {
-        $isClose = mysqli_close($this->link);
-        
-            echo "<br> link уничтожен:" . $isClose;
-       
+        $isClose = mysqli_close($this->link);       
     }
 }
