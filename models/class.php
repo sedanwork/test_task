@@ -5,10 +5,13 @@ define('MYSQL_USER', 'root');
 define('MYSQL_PASSWORD', '');
 define('MYSQL_DB', 'the_prorerty');
 
+
+
 class DB_connect
 {
-    private $link;
-    
+    public $link;
+    public $ttype;
+        
     function __construct()
     {
         $this->link = mysqli_connect(MYSQL_SERVER, MYSQL_USER,                                    MYSQL_PASSWORD, MYSQL_DB);
@@ -25,264 +28,80 @@ class DB_connect
                 printf("Ошибка при загрузке набора символов utf8: %s\n",                    mysqli_error($this->link));             
                 exit();
             }
-    }
-    
-    
-    public function findId($table, $name, $surname, $dateOfBirth)
-    {
-        $sql = "SELECT id FROM %s WHERE name = '%s' AND surname = '%s'";
-        
-        $query = sprintf($sql, 
-                         mysqli_real_escape_string($this->link, trim($table)),
-                         mysqli_real_escape_string($this->link, trim($name)),
-                         mysqli_real_escape_string($this->link, trim($surname)));
-        
-        $res = mysqli_query($this->link, $query);
-        
-        if(mysqli_num_rows($res) == 0)
-            {
-                return 0;
-            }
-        
-        else
-        {
-            $temp = mysqli_fetch_assoc($res);
-            return (int)reset($temp);
-        }
-    }
-    
-    public function createId($table, $name, $surname, $dateOfBirth)
-    {
-        $sql = "INSERT INTO %s (`name`, `surname`, `date_of_birth`) 
-                VALUES ('%s', '%s', '2017-01-04')";
-        
-        $query = sprintf($sql, mysqli_real_escape_string($this->link, trim($table)),                        mysqli_real_escape_string($this->link, trim($name)),
-                               mysqli_real_escape_string($this->link, trim($surname)));
-        
-        $temp = mysqli_query($this->link, $query);
-        return $temp;    
-    }
-    
-    public function getId($table, $name, $surname, $dateOfBirth)
-    {
-        $res = $this->findId($table, $name, $surname, $dateOfBirth);
-        
-        if($res != 0)
-        {            
-            return $res;
-        }
-        
-        else
-        {
-            if($this->createId($table, $name, $surname, $dateOfBirth))
-                {
-                    $res = $this->findId($table, $name, $surname,                              $dateOfBirth);
-
-                    return $res;
-                }
-            
-            else
-                {
-                    echo "can't create row";
-                }
-        }
-
-    }
-    
-    private function find_main($price, $owner_id, $realtor_id)
-    {
-        $sql = "SELECT id FROM main WHERE price = '%d'AND owner_id = '%d' AND               realtor_id = '%d'";
-        
-        $query = sprintf($sql, mysqli_real_escape_string($this->link, $price),                              mysqli_real_escape_string($this->link, $owner_id),
-                               mysqli_real_escape_string($this->link, $realtor_id));
-        
-        $res = mysqli_query($this->link, $query);
-        
-        if(mysqli_num_rows($res) == 0)
-            {
-                return 0;
-            }
-        
-        else
-        {
-            $temp = mysqli_fetch_assoc($res);
-            return (int)reset($temp);
-        }
-    }
-    
-    private function create_main($price, $owner_id, $realtor_id)
-    {
-        $sql = "INSERT INTO main (`price`, `owner_id`, `realtor_id`) 
-                VALUES ('%d', '%d', '%d')";
-        
-        $query = sprintf($sql, mysqli_real_escape_string($this->link, $price),                              mysqli_real_escape_string($this->link, $owner_id),
-                               mysqli_real_escape_string($this->link, $realtor_id));
-
-        $temp = mysqli_query($this->link, $query);
-        
-        return $temp;
-    }
-    
-    public function add($price, $owner_id, $realtor_id)
-    {        
-        $res = $this->find_main($price, $owner_id, $realtor_id);
-        
-        if($res != 0)
-        {            
-            echo " В таблице уже есть данная запись, id: " . $res . "<br>";
-        }
-        
-        else
-        {
-            $isCreated = $this->create_main($price, $owner_id, $realtor_id);
-            
-            if($isCreated)                
-            {
-                echo "Запись успешно добалена. Ее id = " . $this->find_main($price,         $owner_id, $realtor_id) . "<br>";
-            }
-            else
-            {
-                echo "Ошибка при добавлении записи.";
-            }
-           
-        }
-    }
-    
-    private function edit_main($id, $price, $owner_id, $realtor_id)
-    {
-        $sql = "UPDATE main SET price = '%d', owner_id = '%d', realtor_id = '%d'             WHERE id = '%d'";
-        
-        $query = sprintf($sql, mysqli_real_escape_string($this->link, $price),
-                               mysqli_real_escape_string($this->link, $owner_id),
-                               mysqli_real_escape_string($this->link, $realtor_id),
-                               mysqli_real_escape_string($this->link, $id));
-        $temp = mysqli_query($this->link, $query);
-        
-        return $temp;
-    }
-    
-    private function edit_man($table, $id, $name, $surname)
-    {
-        $sql = "UPDATE %s SET name = '%s', surname = '%s' WHERE id = '%d'";
-        
-        $query = sprintf($sql, mysqli_real_escape_string($this->link, trim($table)),
-                               mysqli_real_escape_string($this->link, trim($name)),
-                               mysqli_real_escape_string($this->link,                                           trim($surname)),
-                               mysqli_real_escape_string($this->link, $id));
-        
-        $temp = mysqli_query($this->link, $query);
-        
-        return $temp; 
-    }
-    
-    private function isExist($table, $id)
-    {
-        $sql = "SELECT * FROM %s WHERE id = '%d'";
-        
-        $query  = sprintf($sql, mysqli_real_escape_string($this->link, trim($table)),
-                                mysqli_real_escape_string($this->link, $id));
-        
-        $temp = mysqli_query($this->link, $query);
-        
-        if(mysqli_num_rows($temp) == 0)
-            {
-                return false;
-            }
-        
-        else
-            {
-                return true;
-            }
-    }
-    
-    public function edit($id, $price, $owner_id, $realtor_id)
-    {
-        if($this->isExist("main", $id))
-        {
-            $res = $this->edit_main($id, $price, $owner_id, $realtor_id);
-        
-            if($res)
-            {
-                echo "Строка № " . $id . "успешно отредактирована. <br>";
-            }
-            else
-            {
-                echo "Ошибка при редактровании строки.";
-            }
-        }
-        else
-        {
-            echo "Строки с номером: " . $id . " не существует.";
-        }
-        
-    }
-    
-    public function edit_owner($table, $id, $name, $surname)
-    {
-        if($this->isExist($table, $id))
-        {
-            if($this->edit_man($table, $id, $name, $surname))
-                echo "Строка с номером: " . $id . " успешно отредактирована. <br>";
-            else
-                echo "Ошибка при редактровании строки.";
-            
-        }
-        
-        else
-        {
-            echo "Строки с номером: " . $id . " не существует.";
-        }
-    }
-    
-    private function show_main()
-    {
-        $query = "SELECT DISTINCT m.id, m.price, o.o_name, o.o_surname, r.r_name, r.r_surname, obj.class, obj.ttype, a.town, a.district, a.street, a.number, obj.num_kvart, obj.squere, 
-                    case obj.ttype 
-                    when 1 then obj.jil_plosh 
-                    end
-                FROM main m 
-                JOIN owner o ON m.owner_id = o.id 
-                JOIN realtor r ON m.realtor_id = r.id 
-                JOIN object obj ON m.obj_id = obj.id 
-                JOIN adress a ON m.adress_id = a.id;";
-        
-        $temp = mysqli_query($this->link, $query);
-        
-        return $temp;
-    }
-    
-    public function show()
-    {
-        if($this->link)
-        {
-            $result = $this->show_main();
-            
-            $n = mysqli_num_rows($result);
-            
-            if($n == 0)
-                {
-                    echo "Таблица пуста";
-                }  
-
-            $test = array();
-            
-            for($i=0; $i < $n; $i++)
-            {
-                $temp = mysqli_fetch_assoc($result);
-                
-                foreach($temp as $t1 => $value)
-                {
-                    if(!$temp[$t1])
-                    {
-                        unset($temp[$t1]);
-                    }
-                }
-                
-                $test[] = $temp;
-            }
-            
-            return $test;            
-        }
+        $this->ttype = ['11' => ['ttype' => "Квартира",
+                            'num_kvart' => "№ квартиры:",
+                            'squere' => "Общая площадь:",
+                            'jil_plosh' => "Жилая площадь:",
+                            'kuh_plosh' => "Площадь кухни:",
+                            'etaj' => "Этаж:",
+                            'etajnost' => "Этажность:"],
+                        
+                        '12' => ['ttype' => "Пансионат",
+                            'num_kvart' => "№ квартиры:",
+                            'squere' => "Общая площадь:",
+                            'etaj' => "Этаж:",
+                            'etajnost' => "Этажность:"],
+                        
+                        '13' => ['ttype' => "Комната",
+                            'num_kvart' => "№ квартиры:",
+                            'squere' => "Площадь комнаты:",
+                            'etaj' => "Этаж:",
+                            'etajnost' => "Этажность:"],
+                        
+                        '14' => ['ttype' => "Общежитие",
+                            'num_kvart' => "№ квартиры:",
+                            'squere' => "Общая площадь:",
+                            'etaj' => "Этаж:",
+                            'etajnost' => "Этажность:"],
+                        
+                        '21' => ['ttype' => "Дача",
+                            'num_kvart' => "№ участка:",
+                            'squere' => "Площадь участка:",
+                            'jil_plosh' => "Площадь дома:",
+                            'etajnost' => "Этажность:"],
+                        
+                        '22' => ['ttype' => "Дача",
+                            'num_kvart' => "№ участка:",
+                            'squere' => "Площадь участка:",
+                            'jil_plosh' => "Площадь дома:",
+                            'etajnost' => "Этажность:"],
+                        
+                        '23' => ['ttype' => "Дом",
+                            'num_kvart' => "№ дома:",
+                            'squere' => "Площадь участка:",
+                            'jil_plosh' => "Площадь дома:",
+                            'etajnost' => "Этажность:"],
+                        
+                        '24' => ['ttype' => "Коттедж",
+                            'num_kvart' => "№ дома:",
+                            'squere' => "Площадь участка:",
+                            'jil_plosh' => "Площадь дома:",
+                            'etajnost' => "Этажность:"],
+                        
+                        '25' => ['ttype' => "Таунхаус",
+                            'num_kvart' => "№ дома:",
+                            'squere' => "Общая площадь:",
+                            'jil_plosh' => "Жилая площадь:",
+                            'etaj' => "Этаж:",
+                            'etajnost' => "Этажность:"],
+                        
+                        '31' => ['ttype' => "Офисное помещение",
+                            'num_kvart' => "№ дома:",
+                            'squere' => "Площадь:",
+                            'etaj' => "Этаж:",
+                            'etajnost' => "Этажность:"],
+                        
+                        '32' => ['ttype' => "Торговое помещение",
+                            'num_kvart' => "№ дома:",
+                            'squere' => "Площадь:",
+                            'etaj' => "Этаж:",
+                            'etajnost' => "Этажность:"],
+                        
+                        '33' => ['ttype' => "Складское помещение",
+                            'num_kvart' => "№ дома:",
+                            'squere' => "Площадь:",
+                            'etaj' => "Этаж:",
+                            'etajnost' => "Этажность:"]];
     }
     
     function __destruct()
